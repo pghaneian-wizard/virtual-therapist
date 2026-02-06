@@ -1,26 +1,37 @@
-// Generate or retrieve session ID
+/**
+ * Jennifer White - Virtual Therapist
+ * Apple-like Glass Morphism UI
+ */
+
+// Session management
 function getSessionId() {
   let sessionId = localStorage.getItem('therapist-session-id');
   if (!sessionId) {
-    sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    sessionId = `session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     localStorage.setItem('therapist-session-id', sessionId);
   }
   return sessionId;
 }
 
 const sessionId = getSessionId();
+
+// DOM Elements
+const chatContainer = document.getElementById('chatContainer');
 const chatMessages = document.getElementById('chatMessages');
 const messageInput = document.getElementById('messageInput');
 const typingIndicator = document.getElementById('typingIndicator');
 const sendBtn = document.getElementById('sendBtn');
 
-// Auto-resize textarea
-messageInput.addEventListener('input', function() {
-  this.style.height = 'auto';
-  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-});
+// Auto-resize textarea with smooth animation
+function autoResizeTextarea() {
+  messageInput.style.height = 'auto';
+  const newHeight = Math.min(messageInput.scrollHeight, 120);
+  messageInput.style.height = `${newHeight}px`;
+}
 
-// Handle Enter key
+messageInput.addEventListener('input', autoResizeTextarea);
+
+// Handle keyboard shortcuts
 function handleKeyDown(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
@@ -28,58 +39,77 @@ function handleKeyDown(event) {
   }
 }
 
-// Scroll to bottom of chat
-function scrollToBottom() {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+// Smooth scroll to bottom
+function scrollToBottom(smooth = true) {
+  requestAnimationFrame(() => {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: smooth ? 'smooth' : 'auto'
+    });
+  });
+}
+
+// Create message element
+function createMessageElement(content, isUser = false) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${isUser ? 'user' : 'assistant'} fade-in`;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'message-avatar';
+  
+  const avatarSpan = document.createElement('span');
+  avatarSpan.textContent = isUser ? '●' : 'JW';
+  avatar.appendChild(avatarSpan);
+  
+  const bubble = document.createElement('div');
+  bubble.className = `message-bubble${isUser ? '' : ' glass'}`;
+  
+  // Parse content into paragraphs
+  const paragraphs = content.split('\n').filter(p => p.trim());
+  paragraphs.forEach(text => {
+    const p = document.createElement('p');
+    p.textContent = text;
+    bubble.appendChild(p);
+  });
+  
+  messageDiv.appendChild(avatar);
+  messageDiv.appendChild(bubble);
+  
+  return messageDiv;
 }
 
 // Add message to chat
 function addMessage(content, isUser = false) {
-  const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-  
-  const avatar = document.createElement('div');
-  avatar.className = 'message-avatar';
-  avatar.textContent = isUser ? '👤' : 'JW';
-  
-  const contentDiv = document.createElement('div');
-  contentDiv.className = 'message-content';
-  
-  // Split content into paragraphs
-  const paragraphs = content.split('\n').filter(p => p.trim());
-  paragraphs.forEach(p => {
-    const para = document.createElement('p');
-    para.textContent = p;
-    contentDiv.appendChild(para);
-  });
-  
-  messageDiv.appendChild(avatar);
-  messageDiv.appendChild(contentDiv);
-  chatMessages.appendChild(messageDiv);
-  
+  const message = createMessageElement(content, isUser);
+  chatMessages.appendChild(message);
   scrollToBottom();
 }
 
-// Show/hide typing indicator
+// Toggle typing indicator
 function showTyping(show) {
-  typingIndicator.classList.toggle('active', show);
-  if (show) scrollToBottom();
+  if (show) {
+    typingIndicator.classList.add('active');
+  } else {
+    typingIndicator.classList.remove('active');
+  }
+  scrollToBottom();
 }
 
-// Send message
+// Send message to API
 async function sendMessage() {
   const message = messageInput.value.trim();
-  if (!message) return;
+  if (!message || sendBtn.disabled) return;
   
-  // Clear input
+  // Clear and reset input
   messageInput.value = '';
-  messageInput.style.height = 'auto';
+  autoResizeTextarea();
   
   // Add user message
   addMessage(message, true);
   
-  // Disable send button
+  // Disable input during request
   sendBtn.disabled = true;
+  messageInput.disabled = true;
   
   // Show typing indicator
   showTyping(true);
@@ -94,34 +124,35 @@ async function sendMessage() {
     });
     
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
     
-    // Hide typing indicator
+    // Hide typing and show response
     showTyping(false);
-    
-    // Add assistant message
     addMessage(data.message);
     
   } catch (error) {
     console.error('Error:', error);
     showTyping(false);
     addMessage("I'm having a little trouble connecting right now. Please try again in a moment. 💛");
+  } finally {
+    // Re-enable input
+    sendBtn.disabled = false;
+    messageInput.disabled = false;
+    messageInput.focus();
   }
-  
-  // Re-enable send button
-  sendBtn.disabled = false;
-  messageInput.focus();
 }
 
-// Start new chat
+// Start new conversation
 async function startNewChat() {
+  // Modern confirmation dialog would be better, but using native for simplicity
   if (!confirm('Start a fresh conversation? Your current chat will be cleared.')) {
     return;
   }
   
+  // Clear server session
   try {
     await fetch('/api/clear', {
       method: 'POST',
@@ -134,29 +165,33 @@ async function startNewChat() {
     console.error('Error clearing session:', error);
   }
   
-  // Generate new session ID
-  const newSessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  // Generate new session
+  const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   localStorage.setItem('therapist-session-id', newSessionId);
   
-  // Clear chat messages except welcome
-  chatMessages.innerHTML = '';
-  
-  // Add welcome message back
-  const welcomeDiv = document.createElement('div');
-  welcomeDiv.className = 'message assistant';
-  welcomeDiv.innerHTML = `
-    <div class="message-avatar">JW</div>
-    <div class="message-content">
-      <p>Hello, I'm Jennifer. 💛</p>
-      <p>This is a safe space for you to share whatever's on your mind. There's no judgment here—just a listening ear and support.</p>
-      <p>What would you like to talk about today?</p>
-    </div>
-  `;
-  chatMessages.appendChild(welcomeDiv);
-  
-  // Reload page to reset session
+  // Reload to reset state
   location.reload();
 }
 
-// Focus input on load
-messageInput.focus();
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  messageInput.focus();
+  scrollToBottom(false);
+  
+  // Handle iOS keyboard
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    messageInput.addEventListener('focus', () => {
+      setTimeout(() => scrollToBottom(), 300);
+    });
+  }
+});
+
+// Prevent zoom on double-tap for iOS
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (event) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    event.preventDefault();
+  }
+  lastTouchEnd = now;
+}, false);
