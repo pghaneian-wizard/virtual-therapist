@@ -1,0 +1,16 @@
+{
+  "name": "virtual-therapist",
+  "version": "1.0.0",
+  "description": "Jennifer White - AI Therapist Chat Application",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nodemailer": "^6.9.16"
+  }
+}

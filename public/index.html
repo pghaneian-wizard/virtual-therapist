@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jennifer White - Your Supportive Listener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="therapist-info">
+        <div class="avatar">
+          <div class="avatar-placeholder">JW</div>
+          <span class="status-dot"></span>
+        </div>
+        <div class="info">
+          <h1>Jennifer White</h1>
+          <p>Licensed Therapist • Here for you</p>
+        </div>
+      </div>
+      <button class="new-chat-btn" onclick="startNewChat()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        New Chat
+      </button>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <!-- Welcome message -->
+        <div class="message assistant">
+          <div class="message-avatar">JW</div>
+          <div class="message-content">
+            <p>Hello, I'm Jennifer. 💛</p>
+            <p>This is a safe space for you to share whatever's on your mind. There's no judgment here—just a listening ear and support.</p>
+            <p>What would you like to talk about today?</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="message-avatar">JW</div>
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer class="input-area">
+      <div class="input-container">
+        <textarea 
+          id="messageInput" 
+          placeholder="Share what's on your mind..."
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+        ></textarea>
+        <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </div>
+      <p class="disclaimer">
+        Jennifer is an AI assistant. For emergencies, call 988 (Suicide & Crisis Lifeline) or 911.
+      </p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
